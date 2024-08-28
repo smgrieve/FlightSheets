@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin - Manage Aircraft</title>
+</head>
+<body>
+    <h1>Manage Aircraft</h1>
+    <form method="POST">
+        <label for="name">Aircraft Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+        <input type="submit" name="action" value="Add">
+        <input type="submit" name="action" value="Delete">
+    </form>
+    <h2>Existing Aircraft</h2>
+    <ul>
+        {% for aircraft in aircraft_list %}
+        <li>{{ aircraft[0] }}</li>
+        {% endfor %}
+    </ul>
+    <br>
+    <a href="{{ url_for('index') }}">Back to Main Page</a>
+</body>
+</html>
+
