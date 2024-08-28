@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flight Club - Flight Times</title>
+    <style>
+        .incomplete {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>HSC - Takeoff and Landing Times</h1>
+    
+    <!-- Filter form -->
+    <form method="GET" action="{{ url_for('index') }}">
+        <label for="date">Filter by Date:</label>
+        <input type="date" id="date" name="date" value="{{ filter_date or '' }}">
+        <input type="submit" value="Filter">
+        <label for="incomplete">Show Incomplete Flights Only:</label>
+        <input type="checkbox" id="incomplete" name="incomplete" {{ 'checked' if request.args.get('incomplete') else '' }}>
+        <input type="submit" value="Filter">
+    </form>
+    
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>Aircraft</th>
+            <th>Towplane</th>
+            <th>Instructor</th>
+            <th>Pilot</th>
+            <th>Charge To</th>
+            <th>Takeoff Time</th>
+            <th>Landing Time</th>
+            <th>Flight Time</th>
+            <th>Release Altitude</th>
+            <th>Status</th>
+	    <th>Comments</th>
+	    <th>User Create</th>
+	    <th>User Update</th>
+            <th>Actions</th>
+        </tr>
+        {% for flight in flights %}
+        <tr class="{{ 'incomplete' if flight[9] else '' }}">
+            <td>{{ flight[0] }}</td>
+            <td>{{ flight[1] }}</td>
+            <td>{{ flight[13] }}</td>
+            <td>{{ flight[2] }}</td>
+            <td>{{ flight[3] }}</td>
+            <td>{{ flight[4] }}</td>
+            <td>{{ flight[5] }}</td>
+            <td>{{ flight[6] }}</td>
+            <td>{{ flight[7] }}</td>
+            <td>{{ flight[8] }}</td>
+            <td>{{ 'Incomplete' if flight[9] else 'Complete' }}</td>
+	    <td>{{ flight[10] }}</td>
+	    <td>{{ flight[11] }}</td>
+	    <td>{{ flight[12] }}</td>
+            <td>
+                <a href="{{ url_for('update_landing_time', flight_id=flight[0]) }}">Update Landing Time</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br>
+    <a href="{{ url_for('add_flight') }}">Add a New Flight</a>
+    <br><br>
+    <a href="{{ url_for('export_to_csv') }}">Export to CSV</a>
+</body>
+</html>
+
