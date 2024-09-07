@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flight Club - Flight Times</title>
+    <title>HSC Prod - Flight Times</title>
     <style>
         .incomplete {
             color: red;
@@ -9,7 +9,7 @@
     </style>
 </head>
 <body>
-    <h1>HSC - Takeoff and Landing Times</h1>
+    <h1>HSC Prod - Takeoff and Landing Times</h1>
     
     <!-- Filter form -->
     <form method="GET" action="{{ url_for('index') }}">
@@ -38,6 +38,7 @@
 	    <th>User Create</th>
 	    <th>User Update</th>
             <th>Actions</th>
+            <th>Actions</th>
         </tr>
         {% for flight in flights %}
         <tr class="{{ 'incomplete' if flight[9] else '' }}">
@@ -55,8 +56,11 @@
 	    <td>{{ flight[10] }}</td>
 	    <td>{{ flight[11] }}</td>
 	    <td>{{ flight[12] }}</td>
+	    <td>
+		<a href="{{ url_for('update_altitude', flight_id=flight[0]) }}">Release Altitude</a>    
+	    </td>	
             <td>
-                <a href="{{ url_for('update_landing_time', flight_id=flight[0]) }}">Update Landing Time</a>
+                <a href="{{ url_for('update_landing_time', flight_id=flight[0]) }}">Update Landing</a>
             </td>
         </tr>
         {% endfor %}
@@ -64,7 +68,14 @@
     <br>
     <a href="{{ url_for('add_flight') }}">Add a New Flight</a>
     <br><br>
+    <a href="{{ url_for('add_tow_plane_usage') }}">Add a Towplane Usage</a>
+    <br><br>
+    <a href="{{ url_for('view_tow_plane_usage') }}">Towplane Usage</a>
+    <br><br>
     <a href="{{ url_for('export_to_csv') }}">Export to CSV</a>
+    <br><br>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    <br><br>
 </body>
 </html>
 
