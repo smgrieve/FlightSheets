@@ -13,9 +13,9 @@ app.config['SECRET_KEY'] = '123442523523'
 # MySQL configurations
 db = MySQLdb.connect(
     host="localhost",
-    user="hscdemo",
-    passwd="nvh202",
-    db="hscflightdemo"
+    user="XXXXX",
+    passwd="XXXX",
+    db="XXXXXX"
 )
 
 db.ping(True)
