@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Tow Plane Usage</title>
+</head>
+<body>
+    <h1>Add Tow Plane Usage</h1>
+    <form method="POST">
+        <label for="tow_plane_id">Select Tow Plane:</label>
+        <select id="tow_plane_id" name="tow_plane_id">
+            {% for plane in towplanes %}
+                <option value="{{ plane[0] }}">{{ plane[1] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="date_of_usage">Date of Usage:</label>
+        <input type="date" id="date_of_usage" name="date_of_usage" required>
+        <br><br>
+        <label for="number_of_tows">Number of Tows:</label>
+        <input type="number" id="number_of_tows" name="number_of_tows" required>
+        <br><br>
+        <label for="refuel_times">Refuel Times:</label>
+        <input type="number" id="refuel_times" name="refuel_times" required>
+        <br><br>
+        <label for="gallons_of_fuel">Gallons of Fuel Added:</label>
+        <input type="number" step="0.01" id="gallons_of_fuel" name="gallons_of_fuel" required>
+        <br><br>
+        <label for="oil_added">Oil Added (quarts):</label>
+        <input type="number" step="0.01" id="oil_added" name="oil_added" required>
+        <br><br>
+        <label for="tach_start">Tachometer Start:</label>
+        <input type="number" step="0.01" id="tach_start" name="tach_start" required>
+        <br><br>
+        <label for="tach_end">Tachometer End:</label>
+        <input type="number" step="0.01" id="tach_end" name="tach_end" required>
+        <br><br>
+        <button type="submit">Add Usage Record</button>
+    </form>
+</body>
+</html>
+

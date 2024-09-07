@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Towplane Maintenance</title>
+</head>
+<body>
+    <h1>Update Towplane Maintenance</h1>
+    <form method="POST" action="{{ url_for('update_towplane') }}">
+        <label for="towplane_id">Select Towplane:</label>
+        <select id="towplane_id" name="towplane_id">
+            {% for towplane in towplanes %}
+                <option value="{{ towplane[0] }}">{{ towplane[1] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="annual_due_date">Annual Due Date:</label>
+        <input type="date" id="annual_due_date" name="annual_due_date" required>
+
+        <label for="last_oil_change_tach">Last Oil Change Tachometer Reading:</label>
+        <input type="number" id="last_oil_change_tach" name="last_oil_change_tach" step="0.1" required>
+
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>
+

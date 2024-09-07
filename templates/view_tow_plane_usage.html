@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>View Tow Plane Usage</title>
+    <style>
+        .due-soon { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Tow Plane Usage</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Tow Plane Name</th>
+                <th>Date of Use</th>
+                <th>Tows</th>
+                <th>Refuel Tach</th>
+                <th>Fuel Added</th>
+                <th>Oil Added</th>
+                <th>Annual Due Date</th>
+                <th>Next Oil Change Due (Tach)</th>
+                <th>Tach Start</th>
+                <th>Tach End</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usage in usages %}
+            <tr>
+                <td>{{ usage.name }}</td>
+		<td>{{ usage.date_of_usage }}</td>
+		<td>{{ usage.number_of_tows}}</td>
+		<td>{{ usage.refuel_times}}</td>
+		<td>{{ usage.gallons_of_fuel}}</td>
+		<td>{{ usage.oil_added}}</td>
+                <td class="{{ 'due-soon' if usage.is_annual_due_soon else '' }}">
+                    {{ usage.annual_due_date.strftime('%Y-%m-%d') if usage.annual_due_date else 'N/A' }}
+                </td>
+                <td class="{{ 'due-soon' if usage.is_oil_change_due_soon else '' }}">
+                    {{ usage.next_oil_change_due }}
+                </td>
+                <td>{{ usage.tach_start }}</td>
+                </td>
+                <td>{{ usage.tach_end }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+

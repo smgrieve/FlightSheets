@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aircraft Status</title>
+        <style>
+        .due-this-month {
+		            color: red;
+			            }
+	    </style>
+</head>
+<body>
+    <h1>Aircraft Status</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Aircraft</th>
+                <th>Annual Due Date</th>
+                <th>Total Flight Time (hours)</th>
+		<th>Hours Since Last Annual</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for aircraft in aircrafts %}
+	    <tr class="{{ 'due-this-month' if aircraft[5] else '' }}">
+                <td>{{ aircraft[1] }}</td>
+                <td>{{ aircraft[2] }}</td>
+                <td>{{ aircraft[3] }}</td>
+                <td>{{ aircraft[4] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+

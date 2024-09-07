@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Aircraft Maintenance</title>
+</head>
+<body>
+    <h1>Update Aircraft Maintenance</h1>
+    <form method="POST" action="{{ url_for('update_aircraft') }}">
+        <label for="aircraft_id">Select Towplane:</label>
+        <select id="aircraft_id" name="aircraft_id">
+            {% for aircraft in aircrafts %}
+                <option value="{{ aircraft[0] }}">{{ aircraft[1] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="annual_due_date">Annual Due Date:</label>
+        <input type="date" id="annual_due_date" name="annual_due_date" required>
+
+        <button type="submit">Update</button>
+    </form>
+</body>
+</html>
+

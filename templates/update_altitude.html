@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Release Altitude</title>
+</head>
+<body>
+    <h1>Update Release Altitude</h1>
+    <form method="POST">
+        <label for="release_altitude">New Release Altitude:</label>
+        <input type="number" id="release_altitude" name="release_altitude" value="{{ current_altitude }}">
+        <button type="submit">Update Altitude</button>
+    </form>
+    <a href="{{ url_for('index') }}">Back to Dashboard</a>
+</body>
+</html>
+
