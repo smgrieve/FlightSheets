@@ -13,10 +13,12 @@ app.config['SECRET_KEY'] = '123442523523'
 # MySQL configurations
 db = MySQLdb.connect(
     host="localhost",
-    user="hsc",
-    passwd="hsc",
-    db="flightclub"
+    user="hscdemo",
+    passwd="nvh202",
+    db="hscflightdemo"
 )
+
+db.ping(True)
 
 from datetime import datetime
 
@@ -55,6 +57,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 @app.route('/register', methods=['GET', 'POST'])
+@login_required
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
@@ -115,6 +118,7 @@ def calculate_flight_time(takeoff_time, landing_time):
     return str(duration), False  # Return incomplete status as False
 
 @app.route('/', methods=['GET'])
+@login_required
 def index():
     filter_date = request.args.get('date')
     show_incomplete = request.args.get('incomplete') == 'on'
@@ -191,6 +195,7 @@ def add_flight():
     return render_template('add_flight.html', aircraft_list=aircraft_list, towplane_list=towplane_list,  instructor_list=instructor_list, current_time=current_time)
 
 @app.route('/update/<int:flight_id>', methods=['GET', 'POST'])
+@login_required
 def update_landing_time(flight_id):
     cursor = db.cursor()
     
@@ -213,7 +218,27 @@ def update_landing_time(flight_id):
     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     return render_template('update_landing_time.html', flight=flight, current_time=current_time)
 
+@app.route('/update_altitude/<int:flight_id>', methods=['GET', 'POST'])
+@login_required
+def update_altitude(flight_id):
+    cursor = db.cursor()
+    
+    if request.method == 'POST':
+        new_altitude = request.form['release_altitude']
+        user_update = current_user.username
+        cursor.execute("UPDATE flights SET release_altitude=%s WHERE id=%s", (new_altitude, flight_id))
+        db.commit()
+        flash('Release altitude updated successfully!')
+        return redirect(url_for('index'))
+
+    # For GET request, fetch the current altitude to display in the form
+    cursor.execute("SELECT release_altitude FROM flights WHERE id=%s", (flight_id,))
+    current_altitude = cursor.fetchone()[0]
+    cursor.close()
+    return render_template('update_altitude.html', flight_id=flight_id, current_altitude=current_altitude)
+
 @app.route('/export')
+@login_required
 def export_to_csv():
     cursor = db.cursor()
     cursor.execute("SELECT * FROM flights")
@@ -244,6 +269,7 @@ def export_to_csv():
 
 # Admin route to manage aircraft
 @app.route('/admin/aircraft', methods=['GET', 'POST'])
+@login_required
 def admin_aircraft():
     if request.method == 'POST':
         action = request.form.get('action')
@@ -269,8 +295,178 @@ def admin_aircraft():
 
     return render_template('admin_aircraft.html', aircraft_list=aircraft_list)
 
+@app.route('/add_tow_plane_usage', methods=['GET', 'POST'])
+@login_required
+def add_tow_plane_usage():
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        # Extract data from form
+        tow_plane_id = request.form['tow_plane_id']
+        date_of_usage = request.form['date_of_usage']
+        number_of_tows = request.form['number_of_tows']
+        refuel_times = request.form['refuel_times']
+        gallons_of_fuel = request.form['gallons_of_fuel']
+        oil_added = request.form['oil_added']
+        tach_start = request.form['tach_start']
+        tach_end = request.form['tach_end']
+
+        # Fetch the last oil change tach and compute the next due
+        cursor.execute("SELECT next_oil_change_tach FROM tow_plane_usage WHERE tow_plane_id=%s ORDER BY date_of_usage DESC LIMIT 1", (tow_plane_id,))
+        result = cursor.fetchone()
+
+        # Insert data into the database
+        cursor.execute("""
+            INSERT INTO tow_plane_usage (
+                tow_plane_id, date_of_usage, number_of_tows, refuel_times, 
+                gallons_of_fuel, oil_added, tach_start, tach_end
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """, (tow_plane_id, date_of_usage, number_of_tows, refuel_times, gallons_of_fuel, oil_added, tach_start, tach_end)
+        )
+        db.commit()
+        cursor.close()
+        flash('Tow plane usage added successfully!')
+        return redirect(url_for('view_tow_plane_usage'))
+
+    cursor.execute("SELECT id, name FROM towplanes")
+    towplanes = cursor.fetchall()
+    cursor.close()
+    return render_template('add_tow_plane_usage.html', towplanes=towplanes)
+
+@app.route('/view_tow_plane_usage')
+@login_required
+def view_tow_plane_usage():
+    current_date = datetime.now().date()
+    current_month_start = datetime(current_date.year, current_date.month, 1).date()
+    next_month_start = (current_month_start + timedelta(days=31)).replace(day=1)
+    cursor = db.cursor()
+    cursor.execute("""
+    SELECT tp.id, tpu.date_of_usage, tpu.number_of_tows, tpu.refuel_times, tpu.gallons_of_fuel, tpu.oil_added, tpu.tach_start, tpu.tach_end, tp.name, tp.annual_due_date, tp.next_oil_change_due, tpu.tach_end
+    FROM tow_plane_usage tpu
+    INNER JOIN towplanes tp ON tpu.tow_plane_id = tp.id
+""") 
+    raw_usages = cursor.fetchall()
+    
+    usages = []
+    for usage in raw_usages:
+        tow_plane_id, date_of_usage, number_of_tows, refuel_times, gallons_of_fuel, oil_added, tach_start, tach_end, name, annual_due_date, next_oil_change_due, current_tach_end = usage
+        is_annual_due_soon = annual_due_date >= current_month_start and annual_due_date < next_month_start
+        is_oil_change_due_soon = (next_oil_change_due - current_tach_end) <= 5
+        
+        usages.append({
+            'tow_plane_id': tow_plane_id,
+            'date_of_usage': date_of_usage,
+            'number_of_tows': number_of_tows,
+            'refuel_times': refuel_times,
+            'gallons_of_fuel': gallons_of_fuel,
+            'oil_added': oil_added,
+            'tach_start': tach_start,
+            'tach_end': tach_end,
+            'name': name,
+            'annual_due_date': annual_due_date,
+            'next_oil_change_due': next_oil_change_due,
+            'is_annual_due_soon': is_annual_due_soon,
+            'is_oil_change_due_soon': is_oil_change_due_soon
+        })
+    print (usages)
+    cursor.close()
+    return render_template('view_tow_plane_usage.html', usages=usages)
+
+@app.route('/admin/towplanes', methods=['GET', 'POST'])
+@login_required
+def update_towplane():
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        tow_plane_id = request.form['towplane_id']
+        last_oil_change_tach = float(request.form['last_oil_change_tach'])
+        annual_due_date = request.form['annual_due_date']
+
+        # Calculate next oil change due based on last oil change tach
+        next_oil_change_due = last_oil_change_tach + 50  # Increment by 50 tach hours
+
+        try:
+            cursor.execute("""
+                UPDATE towplanes SET
+                last_oil_change_tach = %s,
+                next_oil_change_due = %s,
+                annual_due_date = %s
+                WHERE id = %s
+            """, (last_oil_change_tach, next_oil_change_due, annual_due_date, tow_plane_id))
+            db.commit()
+            flash('Towplane details updated successfully!')
+        except MySQLdb.Error as e:
+            db.rollback()
+            flash(f'Error updating towplane details: {e}')
+
+    # Fetch towplane data for dropdown
+    cursor.execute("SELECT id, name FROM towplanes")
+    towplanes = cursor.fetchall()
+
+    return render_template('admin_towplanes.html', towplanes=towplanes)
+
+@app.route('/aircraft_status')
+def aircraft_status():
+    cursor = db.cursor()
+    current_date = datetime.now().date()
+    current_month_start = current_date.replace(day=1)
+    next_month_start = (current_month_start + timedelta(days=32)).replace(day=1)
+    # Fetching aircraft data along with total flight time
+    cursor.execute("""
+            SELECT 
+            a.id, 
+            a.name, 
+            a.annual_due_date, 
+            COALESCE(SEC_TO_TIME(SUM(f.flight_time)), '00:00:00') AS total_flight_time, 
+            COALESCE(SEC_TO_TIME(SUM(CASE 
+                WHEN f.takeoff_time > DATE_SUB(a.annual_due_date, INTERVAL 12 MONTH) THEN f.flight_time 
+                ELSE 0 
+            END)), '00:00:00') AS hours_since_last_annual,
+            (a.annual_due_date >= %s AND a.annual_due_date < %s) AS is_due_this_month
+        FROM 
+            aircraft a
+        LEFT JOIN flights f 
+            ON a.name = f.aircraft
+        GROUP BY 
+            a.id
+    """, (current_month_start, next_month_start))
+
+    
+    aircrafts = cursor.fetchall()
+    cursor.close()
+
+    return render_template('aircraft_status.html', aircrafts=aircrafts, current_date=current_date)
+
+@app.route('/admin/maint', methods=['GET', 'POST'])
+@login_required
+def update_aircraft():
+    cursor = db.cursor()
+
+    if request.method == 'POST':
+        aircraft_id = request.form['aircraft_id']
+        annual_due_date = request.form['annual_due_date']
+
+        try:
+            cursor.execute("""
+                UPDATE aircraft SET
+                annual_due_date = %s
+                WHERE id = %s
+            """, (annual_due_date, aircraft_id))
+            db.commit()
+            flash('Aircrat details updated successfully!')
+        except MySQLdb.Error as e:
+            db.rollback()
+            flash(f'Error updating Aircraft details: {e}')
+
+    # Fetch towplane data for dropdown
+    cursor.execute("SELECT id, name FROM aircraft")
+    aircrafts = cursor.fetchall()
+
+    return render_template('admin_maint.html', aircrafts=aircrafts)
+
 # Admin route to manage instructors
 @app.route('/admin/instructors', methods=['GET', 'POST'])
+@login_required
 def admin_instructors():
     if request.method == 'POST':
         action = request.form.get('action')
@@ -298,4 +494,4 @@ def admin_instructors():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0' , port=5000) 
+    app.run(host='0.0.0.0' , port=5000, debug=True) 
