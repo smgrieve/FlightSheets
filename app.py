@@ -24,18 +24,18 @@ airport_elevation = 1300
 # MySQL configurations
 db = MySQLdb.connect(
     host="localhost",
-    user="hscprod",
-    passwd="g1212MNZ!",
-    db="hscflightprod"
+    user="",
+    passwd="",
+    db=""
 )
 
 @contextmanager
 def get_connection():
     conn = mysql.connector.connect(
-        host="localhost",
-        user="hscprod",
-        password="g1212MNZ!",
-        database="hscflightprod"
+        host="",
+        user="",
+        password="",
+        database=""
     )
     try:
         yield conn
@@ -45,14 +45,6 @@ def get_connection():
 
 db.ping(True)
 
-
-#def get_connection():
-#    return MySQLdb.connect(
-#       host="localhost",
-#        user="hscprod",
-#        passwd="g1212MNZ!",
-#        db="hscflightprod"
-#    )
 
 
 logging.basicConfig(level=logging.DEBUG)
@@ -64,9 +56,9 @@ import smtplib
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'hamiltonsoaring@gmail.com'  # Replace with your Gmail address
-app.config['MAIL_PASSWORD'] = 'bzpg jeds bvtt owgk'  # Replace with your Gmail app password
-app.config['MAIL_DEFAULT_SENDER'] = 'hamiltonsoaring@gmail.com'
+app.config['MAIL_USERNAME'] = ''  # Replace with your Gmail address
+app.config['MAIL_PASSWORD'] = ''  # Replace with your Gmail app password
+app.config['MAIL_DEFAULT_SENDER'] = ''
 
 mail = Mail(app)
 
@@ -1863,8 +1855,8 @@ from email.mime.text import MIMEText
 def send_email(recipient, subject, body):
     """Send an email using Office365's SMTP server."""
     try:
-        sender_email = "smgrieve@hamiltonsoaringclub.org"  # Replace with your Office365 email address
-        sender_password = "hzbbnfylnplrvsdq"          # Replace with your Office365 password
+        sender_email = ""  # Replace with your Office365 email address
+        sender_password = ""          # Replace with your Office365 password
 
         # Configure the SMTP server for Office365
         server = smtplib.SMTP("smtp.office365.com", 587)
