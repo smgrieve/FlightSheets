@@ -27,11 +27,11 @@ SOCK_READ_TIMEOUT    = 60.0
 
 DB_CONFIG = {
     "host": "localhost",
-    "user": "hscprod",
-    "password": "g1212MNZ!",
-    "database": "hscflightprod",
+    "user": "",
+    "password": "",
+    "database": "",
     "pool_name": "ogn_pool",
-    "pool_size": 5,
+    "pool_size": 10,
     "autocommit": True,
 }
 
