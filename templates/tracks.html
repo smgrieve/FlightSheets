@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Historical Glider Tracks</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+    #map { height: 100%; }
+    #controls {
+      position: absolute;
+      top: 10px; left: 10px;
+      z-index: 999;
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 0 8px #0003;
+    }
+    #legend {
+      background: white;
+      padding: 6px;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+    .color-box {
+      display: inline-block;
+      width: 12px; height: 12px;
+      margin-right: 4px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <form id="track-form">
+    <label for="flarm_id">Aircraft:</label>
+    <select id="flarm_id" name="flarm_id">
+      <option value="">-- All Aircraft --</option>
+      {% for a in aircraft %}
+        <option value="{{ a.flarm_id }}">{{ a.name or a.flarm_id }}</option>
+      {% endfor %}
+    </select>
+    <label for="date">Date:</label>
+    <input type="date" id="date" name="date" required>
+    <button type="submit">Show Track</button>
+    <button type="button" id="download-igc">Download IGC</button>
+  </form>
+  <div id="legend"><strong>Legend:</strong><br></div>
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map = L.map('map').setView([31.7, -98.1], 9);
+let tracks = [];
+let markers = [];
+let data = [];
+
+const street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
+});
+
+const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri', maxZoom: 19
+});
+
+const baseLayers = {
+  "Street Map": street,
+  "Satellite": satellite
+};
+
+street.addTo(map);
+L.control.layers(baseLayers).addTo(map);
+
+function getQueryParam(name) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+async function fetchTrackData(flarm_id, date) {
+  const res = await fetch(`/api/track_data?date=${date}&flarm_id=${flarm_id}`);
+  return await res.json();
+}
+
+function altitudeColor(alt) {
+  const h = Math.min(240, Math.max(0, 240 - Math.floor((alt || 0) / 50)));
+  return `hsl(${h}, 100%, 50%)`;
+}
+
+async function loadTrack() {
+  const flarm_id = document.getElementById('flarm_id').value;
+  const date = document.getElementById('date').value;
+  if (!date) return;
+
+  data = await fetchTrackData(flarm_id, date);
+
+  // Clear old tracks
+  tracks.forEach(t => map.removeLayer(t));
+  markers.forEach(m => map.removeLayer(m));
+  document.getElementById('legend').innerHTML = "<strong>Legend:</strong><br>";
+  tracks = []; markers = [];
+
+  const grouped = {};
+  for (const row of data) {
+    if (!grouped[row.flarm_id]) grouped[row.flarm_id] = [];
+    grouped[row.flarm_id].push(row);
+  }
+
+  Object.entries(grouped).forEach(([id, points]) => {
+    const segments = [];
+    for (let i = 1; i < points.length; i++) {
+      const p1 = points[i - 1], p2 = points[i];
+      const color = altitudeColor(p1.altitude);
+      segments.push(L.polyline([
+        [p1.latitude, p1.longitude],
+        [p2.latitude, p2.longitude]
+      ], { color, weight: 3 }));
+    }
+    const group = L.layerGroup(segments).addTo(map);
+    tracks.push(group);
+
+    const start = L.marker([points[0].latitude, points[0].longitude]).bindPopup(`â§ ${id}`).addTo(map);
+    const end = L.marker([points.at(-1).latitude, points.at(-1).longitude]).bindPopup(`ð¬ ${id}`).addTo(map);
+    markers.push(start); markers.push(end);
+
+    const swatch = `<span class="color-box" style="background:${altitudeColor(points[0].altitude)}"></span>`;
+    document.getElementById('legend').innerHTML += `${swatch} ${id}<br>`;
+  });
+
+  if (data.length) map.fitBounds(L.polyline(data.map(p => [p.latitude, p.longitude])).getBounds());
+}
+
+document.getElementById('track-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  await loadTrack();
+});
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const urlFlarm = getQueryParam("flarm_id");
+  const urlDate = getQueryParam("date");
+  if (urlFlarm) document.getElementById('flarm_id').value = urlFlarm;
+  if (urlDate) document.getElementById('date').value = urlDate;
+  if (urlDate) await loadTrack();
+});
+
+document.getElementById('download-igc').addEventListener('click', () => {
+  if (!data.length) return alert("No track loaded");
+
+  const flarm = data[0].flarm_id || "UNKNOWN";
+  const now = new Date();
+  const igcHeader = [
+    "AXXXIGC-Generated",
+    `HFDTE${now.getDate().toString().padStart(2, '0')}${(now.getMonth() + 1).toString().padStart(2, '0')}${String(now.getFullYear()).slice(-2)}`,
+    "HFFXA100", "HFPLTPILOT:UNKNOWN", `HFGTYGLIDER`, `HFGID${flarm}`,
+    "HFDTM100GPSDATUM:WGS-1984", "HFRFWFIRMWARE:ogn_logger", "HFRHWHARDWARE:OGN",
+    "HFFTYFRTYPE:OGN Virtual", "HFGPSGPS:GPS", "HFPRSPRESSALTSENSOR:None",
+    "I013638FXA3940SIU4445ENL"
+  ].join("\n");
+
+  const igcBody = data.map(d => {
+    const t = new Date(d.position_time);
+    const hh = String(t.getUTCHours()).padStart(2, '0');
+    const mm = String(t.getUTCMinutes()).padStart(2, '0');
+    const ss = String(t.getUTCSeconds()).padStart(2, '0');
+    const lat = d.latitude, lon = d.longitude;
+    const lat_deg = Math.floor(Math.abs(lat));
+    const lat_min = (Math.abs(lat) - lat_deg) * 60;
+    const lat_str = `${String(lat_deg).padStart(2, '0')}${(lat_min * 1000).toFixed(0).padStart(5, '0')}${lat >= 0 ? 'N' : 'S'}`;
+    const lon_deg = Math.floor(Math.abs(lon));
+    const lon_min = (Math.abs(lon) - lon_deg) * 60;
+    const lon_str = `${String(lon_deg).padStart(3, '0')}${(lon_min * 1000).toFixed(0).padStart(5, '0')}${lon >= 0 ? 'E' : 'W'}`;
+    const alt = Math.round(d.altitude || 0);
+    return `B${hh}${mm}${ss}${lat_str}${lon_str}A${String(alt).padStart(5, '0')}${String(alt).padStart(5, '0')}`;
+  }).join("\n");
+
+  const igc = `${igcHeader}\n${igcBody}`;
+  const blob = new Blob([igc], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${flarm}_${now.toISOString().split("T")[0]}.igc`;
+  link.click();
+  URL.revokeObjectURL(url);
+});
+</script>
+
+</body>
+</html>
+

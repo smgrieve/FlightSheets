@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Approve or Delete Volunteer Hours</title>
+</head>
+<body>
+    <h1>Approve or Delete Volunteer Hours</h1>
+    <!-- Start the form for approving multiple hours -->
+    <form method="POST" action="{{ url_for('approve_hours') }}">
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Select</th>
+                    <th>Volunteer Name</th>
+                    <th>Date Worked</th>
+                    <th>Hours</th>
+                    <th>Comments</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for hour in unapproved_hours %}
+                <tr>
+                    <!-- Checkbox to select hour for approval -->
+                    <td><input type="checkbox" name="approve_ids" value="{{ hour[0] }}"></td>
+                    <td>{{ hour[1] }}</td>
+                    <td>{{ hour[2] }}</td>
+                    <td>{{ hour[3] }}</td>
+                    <td>{{ hour[4] }}</td>
+                    <td>
+                        <!-- Individual form for each hour to handle deletion -->
+                        <form method="POST" action="{{ url_for('approve_hours') }}">
+                            <input type="hidden" name="hour_id" value="{{ hour[0] }}">
+                            <button type="submit" name="delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <button type="submit" name="approve">Approve Selected Hours</button>
+    </form>
+</body>
+</html>
+

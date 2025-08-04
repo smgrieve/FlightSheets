@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Tow Pilots</title>
+</head>
+<body>
+    <h1>Manage Tow Pilots</h1>
+
+    <h2>Add New Tow Pilot</h2>
+    <form method="post">
+        <input type="text" name="name" placeholder="Name" required>
+        <label>
+            <input type="checkbox" name="active" checked> Active
+        </label>
+        <button type="submit" name="submit" value="Add">Add Pilot</button>
+    </form>
+
+    <h2>Current Tow Pilots</h2>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+        {% for pilot in tow_pilots %}
+        <tr>
+            <form method="post">
+                <input type="hidden" name="pilot_id" value="{{ pilot[0] }}">
+                <td><input type="text" name="name" value="{{ pilot[1] }}"></td>
+                <td><input type="checkbox" name="active" {{ 'checked' if pilot[3] else '' }}></td>
+                <td>
+                    <button type="submit" name="submit" value="Update">Update</button>
+                </td>
+            </form>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+

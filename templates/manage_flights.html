@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Flights</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 8px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        .pagination {
+            margin-top: 20px;
+        }
+        .pagination a {
+            margin: 0 10px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .filter-form {
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Manage Flights</h1>
+
+    <a href="{{ url_for('index') }}">ð  Home</a>
+
+    <form method="get" action="{{ url_for('manage_flights') }}" class="filter-form">
+        Aircraft:
+        <select name="aircraft">
+            <option value="">All</option>
+            {% for ac in aircraft_options %}
+                <option value="{{ ac }}" {% if ac == selected_aircraft %}selected{% endif %}>{{ ac }}</option>
+            {% endfor %}
+        </select>
+
+        Pilot:
+        <select name="pilot">
+            <option value="">All</option>
+            {% for p in pilot_options %}
+                <option value="{{ p }}" {% if p == selected_pilot %}selected{% endif %}>{{ p }}</option>
+            {% endfor %}
+        </select>
+
+        Start Date:
+        <input type="date" name="start_date" value="{{ start_date }}">
+
+        End Date:
+        <input type="date" name="end_date" value="{{ end_date }}">
+
+        <button type="submit">Filter</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Aircraft</th>
+                <th>Pilot</th>
+                <th>Takeoff</th>
+                <th>Landing</th>
+                <th>Release Altitude</th>
+                <th>Rental Cost</th>
+                <th>Tow Cost</th>
+                <th>Total Cost</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+            <tr>
+                <td>{{ flight[0] }}</td>
+                <td>{{ flight[1] }}</td>
+                <td>{{ flight[2] }}</td>
+                <td>{{ flight[3] }}</td>
+                <td>{{ flight[4] }}</td>
+                <td>{{ flight[5] }}</td>
+                <td>${{ "%.2f"|format(flight[6]) }}</td>
+                <td>${{ "%.2f"|format(flight[7]) }}</td>
+                <td>${{ "%.2f"|format(flight[8]) }}</td>
+<td>
+    <a href="{{ url_for('edit_flight', flight_id=flight[0]) }}">Edit</a> |
+    <a href="{{ url_for('edit_flight_cost', flight_id=flight[0]) }}">Edit Cost</a> |
+    <form action="{{ url_for('delete_flight_manage', flight_id=flight[0]) }}" method="post" style="display:inline;" onsubmit="return confirm('Are you sure?');">
+        <button type="submit">Delete</button>
+    </form>
+</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        {% if page > 1 %}
+            <a href="{{ url_for('manage_flights', page=page-1, aircraft=selected_aircraft, pilot=selected_pilot, start_date=start_date, end_date=end_date) }}">&laquo; Previous</a>
+        {% endif %}
+
+        Page {{ page }} of {{ total_pages }}
+
+        {% if page < total_pages %}
+            <a href="{{ url_for('manage_flights', page=page+1, aircraft=selected_aircraft, pilot=selected_pilot, start_date=start_date, end_date=end_date) }}">Next &raquo;</a>
+        {% endif %}
+    </div>
+
+</body>
+</html>
+

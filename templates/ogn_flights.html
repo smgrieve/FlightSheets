@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>OGN Flights</title>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
+    select, input[type="date"], button { padding: 4px; margin-right: 8px; }
+    .top-bar { display: flex; align-items: center; justify-content: space-between; }
+    .form-inline { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .preset-buttons button { margin-left: 4px; }
+    .home-btn {
+      text-decoration: none; padding: 6px 12px;
+      background: #007bff; color: white; border-radius: 4px;
+    }
+  </style>
+  <script>
+    function setDate(offsetDays) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      const formatted = d.toISOString().split('T')[0];
+      document.getElementById('date').value = formatted;
+    }
+  </script>
+</head>
+<body>
+
+<div class="top-bar">
+  <form class="form-inline" method="get">
+    <label for="flarm_id">Aircraft:</label>
+    <select name="flarm_id" id="flarm_id">
+      <option value="">-- All --</option>
+      {% for a in aircraft_ids %}
+        <option value="{{ a.flarm_id }}" {% if a.flarm_id == selected_id %}selected{% endif %}>
+          {{ a.name or a.flarm_id }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <label for="date">Date:</label>
+    <input type="date" name="date" id="date" value="{{ selected_date or '' }}">
+
+    <span class="preset-buttons">
+      <button type="button" onclick="setDate(0)">Today</button>
+      <button type="button" onclick="setDate(-1)">Yesterday</button>
+    </span>
+
+    <button type="submit">Filter</button>
+  </form>
+
+  <a class="home-btn" href="/">Home</a>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Aircraft</th>
+      <th>Takeoff</th>
+      <th>Landing</th>
+      <th>Duration</th>
+      <th>Track</th>
+      <th>IGC</th>
+      <th>Details</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in flights %}
+      <tr>
+        <td>{{ f.aircraft or f.flarm_id }}</td>
+        <td>{{ f.takeoff_time }}</td>
+        <td>{{ f.landing_time }}</td>
+        <td>{{ (f.flight_secs // 60) }} min</td>
+        <td><a href="/tracks?flarm_id={{ f.flarm_id }}&date={{ f.takeoff_time.date() }}">View</a></td>
+        <td><a href="/export_igc?flarm_id={{ f.flarm_id }}&date={{ f.takeoff_time.date() }}">IGC</a></td>
+        <td><a href="/ogn/flight/{{ f.id }}">Details</a></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+</body>
+</html>
+

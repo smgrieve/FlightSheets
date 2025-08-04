@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hamilton-area Glider Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    html, body, #map { height: 100%; margin: 0; }
+    .leaflet-tooltip.glider-label {
+      background: rgba(255,255,255,0.9);
+      border-radius: 4px;
+      padding: 2px 4px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #000;
+      border: 1px solid #666;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// ---------------------------------------------------------------------
+//  Map setup
+// ---------------------------------------------------------------------
+const map = L.map('map').setView([31.7033, -98.1231], 9);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 18,
+  attribution: 'Â© OpenStreetMap contributors'
+}).addTo(map);
+
+// Use standard Leaflet icon; swap for custom glider icon when ready
+const gliderIcon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+  iconSize:   [25, 41],
+  iconAnchor: [12, 41]
+});
+
+const markers = new Map();   // flarm_id => Leaflet marker
+
+// ---------------------------------------------------------------------
+//  Poll /api/ogn and render markers
+// ---------------------------------------------------------------------
+async function refreshOGN() {
+  try {
+    const r = await fetch('/api/ogn');
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const data = await r.json();
+
+    const stillVisible = new Set();
+    let recentered = false;
+
+    data.forEach(g => {
+      const id  = g.flarm_id;
+      const lat = Number(g.lat  ?? g.latitude);
+      const lng = Number(g.lng  ?? g.longitude);
+      if (isNaN(lat) || isNaN(lng)) return;          // skip bad coords
+
+      const label = g.aircraft || id;                // always have a label
+      const popupHTML = `
+        <strong>${label}</strong><br>
+        FLARM: ${id}<br>
+        Alt: ${g.alt ?? 0} ft<br>
+        Speed: ${g.speed ?? 0} kt<br>
+        Heading: ${g.course ?? 'â'}Â°<br>
+        Time: ${new Date(g.position_time).toLocaleTimeString()}
+      `;
+
+      stillVisible.add(id);
+
+      if (markers.has(id)) {
+        // Update existing marker
+        const m = markers.get(id);
+        m.setLatLng([lat, lng])
+         .setPopupContent(popupHTML)
+         .setTooltipContent(label);
+      } else {
+        // Create new marker
+        const m = L.marker([lat, lng], { icon: gliderIcon })
+                   .addTo(map)
+                   .bindPopup(popupHTML)
+                   .bindTooltip(label, {
+                      permanent: true,
+                      direction: 'top',
+                      offset: [0, -10],
+                      className: 'glider-label'
+                   });
+        markers.set(id, m);
+      }
+
+      // Center map on first aircraft of this refresh
+      if (!recentered) {
+        map.setView([lat, lng], 11);
+        recentered = true;
+      }
+    });
+
+    // Remove markers that disappeared
+    markers.forEach((marker, id) => {
+      if (!stillVisible.has(id)) {
+        map.removeLayer(marker);
+        markers.delete(id);
+      }
+    });
+
+  } catch (err) {
+    console.error('OGN fetch error:', err);
+  }
+}
+
+// Initial load and poll every 15 s
+refreshOGN();
+setInterval(refreshOGN, 15000);
+</script>
+
+</body>
+</html>
+

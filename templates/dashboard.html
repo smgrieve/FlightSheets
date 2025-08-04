@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Analytics Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            margin: 20px auto;
+        }
+        .filters {
+            margin: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Flight Analytics Dashboard</h1>
+
+    <div class="filters">
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate">
+
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate">
+
+        <label for="filterPilot">Pilot:</label>
+        <select id="filterPilot">
+            <option value="">All Pilots</option>
+        </select>
+
+        <label for="filterAircraft">Aircraft:</label>
+        <select id="filterAircraft">
+            <option value="">All Aircraft</option>
+        </select>
+
+        <button onclick="applyFilters()">Apply Filters</button>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="flightsByAircraftChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="flightsByPilotChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="flightsByMemberChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="revenueChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="releaseAltitudeChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="flightsByInstructorChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="flightsByTowPilotChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="flightsByTowplaneChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="flightTimeByAircraftChart"></canvas>
+    </div>
+    <div class="chart-container">
+        <canvas id="flightTimeByMemberChart"></canvas>
+    </div>
+
+    <script>
+        let charts = {};
+
+        function destroyChart(chartId) {
+            if (charts[chartId]) {
+                charts[chartId].destroy();
+                delete charts[chartId];
+            }
+        }
+
+        function generateColors(count) {
+            return Array.from({ length: count }, () => {
+                const r = Math.floor(Math.random() * 255);
+                const g = Math.floor(Math.random() * 255);
+                const b = Math.floor(Math.random() * 255);
+                return `rgba(${r}, ${g}, ${b}, 0.6)`;
+            });
+        }
+
+        function renderChart(chartId, type, labels, data, title, options = {}) {
+            destroyChart(chartId);
+            const ctx = document.getElementById(chartId).getContext("2d");
+            const backgroundColors = generateColors(labels.length);
+            charts[chartId] = new Chart(ctx, {
+                type,
+                data: {
+                    labels,
+                    datasets: [{
+                        label: title,
+                        data,
+                        backgroundColor: options.background || backgroundColors,
+                        borderColor: options.border || backgroundColors.map(color => color.replace('0.6', '1')),
+                        fill: options.fill || false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function updateCharts(startDate, endDate, pilot, aircraft) {
+            const params = new URLSearchParams({ start_date: startDate, end_date: endDate, pilot, aircraft });
+
+            fetch(`/api/dashboard/flights_by_aircraft?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightsByAircraftChart",
+                        "bar",
+                        data.map(d => d.aircraft),
+                        data.map(d => d.flight_count),
+                        "Flights by Aircraft"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/flights_by_pilot?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightsByPilotChart",
+                        "bar",
+                        data.map(d => d.pilot),
+                        data.map(d => d.flight_count),
+                        "Flights by Pilot"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/flights_by_member?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightsByMemberChart",
+                        "bar",
+                        data.map(d => d.member_id),
+                        data.map(d => d.flight_count),
+                        "Flights by Member"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/revenue?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "revenueChart",
+                        "bar",
+                        ["Rental Revenue", "Tow Revenue", "Total Revenue"],
+                        [data.total_rental_revenue, data.total_tow_revenue, data.total_revenue],
+                        "Revenue (USD)"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/release_altitude?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    const frequencies = {};
+                    data.forEach(altitude => {
+                        const bucket = Math.round(altitude / 100) * 100;
+                        frequencies[bucket] = (frequencies[bucket] || 0) + 1;
+                    });
+                    const labels = Object.keys(frequencies).sort((a, b) => a - b);
+                    const values = labels.map(label => frequencies[label]);
+
+                    renderChart(
+                        "releaseAltitudeChart",
+                        "line",
+                        labels,
+                        values,
+                        "Release Altitudes (Frequency)",
+                        { fill: true, background: "rgba(255, 99, 132, 0.2)", border: "rgba(255, 99, 132, 1)" }
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/instructor?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightsByInstructorChart",
+                        "bar",
+                        data.map(d => d.instructor),
+                        data.map(d => d.flight_count),
+                        "Flights by Instructor"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/towpilot?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightsByTowPilotChart",
+                        "bar",
+                        data.map(d => d.tow_pilot),
+                        data.map(d => d.flight_count),
+                        "Flights by Tow Pilot"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/towplane?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightsByTowplaneChart",
+                        "bar",
+                        data.map(d => d.towplane),
+                        data.map(d => d.flight_count),
+                        "Flights by Towplane"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/flight_time_by_aircraft?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightTimeByAircraftChart",
+                        "bar",
+                        data.map(d => d.aircraft),
+                        data.map(d => (parseInt(d.flight_time) / 60).toFixed(2)),
+                        "Flight Time by Aircraft (hours)"
+                    );
+                })
+                .catch(console.error);
+
+            fetch(`/api/dashboard/flight_time_by_member?${params}`)
+                .then(response => response.json())
+                .then(data => {
+                    renderChart(
+                        "flightTimeByMemberChart",
+                        "bar",
+                        data.map(d => d.member_id),
+                        data.map(d => (parseInt(d.total_flight_time) / 3600).toFixed(2)),
+                        "Flight Time by Member (hours)"
+                    );
+                })
+                .catch(console.error);
+        }
+
+        function applyFilters() {
+            const startDate = document.getElementById("startDate").value || "";
+            const endDate = document.getElementById("endDate").value || "";
+            const pilot = document.getElementById("filterPilot").value || "";
+            const aircraft = document.getElementById("filterAircraft").value || "";
+            updateCharts(startDate, endDate, pilot, aircraft);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            applyFilters();
+        });
+    </script>
+    
+        <a href="/" class="back-button">Back to Home</a>
+
+</body>
+</html>
+

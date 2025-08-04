@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Member Profile</title>
+    <style>
+        table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+    <h1>Welcome, {{ current_user.username }}</h1>
+    <a href="{{ url_for('index') }}">ð  Home</a>
+
+    <h2>Flight Summary</h2>
+    <p><strong>Total Flight Time:</strong> {{ totals.total_flight_time or '0:00:00' }}</p>
+    <p><strong>Total Rental Cost:</strong> ${{ "%.2f"|format(totals.total_rental or 0) }}</p>
+    <p><strong>Total Tow Cost:</strong> ${{ "%.2f"|format(totals.total_tow or 0) }}</p>
+    <p><strong>Grand Total:</strong> ${{ "%.2f"|format(totals.grand_total or 0) }}</p>
+    <a href="{{ url_for('download_logbook') }}" class="button">Download My Logbook (CSV)</a>
+
+    <h3>Flight History</h3>
+    <table>
+        <tr>
+            <th>ID</th><th>Aircraft</th><th>Takeoff</th><th>Landing</th>
+            <th>Flight Time</th><th>Rental</th><th>Tow</th><th>Total</th>
+        </tr>
+        {% for flight in flights %}
+        <tr>
+            <td>{{ flight.id }}</td>
+            <td>{{ flight.aircraft }}</td>
+            <td>{{ flight.takeoff_time }}</td>
+            <td>{{ flight.landing_time }}</td>
+            <td>{{ flight.flight_time }}</td>
+            <td>${{ "%.2f"|format(flight.cost) }}</td>
+            <td>${{ "%.2f"|format(flight.tow_cost) }}</td>
+            <td>${{ "%.2f"|format(flight.total_cost) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    {% if is_youth %}
+        <h3>Volunteer Hours</h3>
+        <table>
+            <tr><th>Date</th><th>Hours</th><th>Comments</th></tr>
+            {% for vh in volunteer_hours %}
+            <tr>
+                <td>{{ vh.date_worked }}</td>
+                <td>{{ vh.hours }}</td>
+                <td>{{ vh.comments }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+</body>
+</html>
+

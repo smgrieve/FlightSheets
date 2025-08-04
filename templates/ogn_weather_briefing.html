@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interactive Weather Briefing – KMNZ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      font-family: sans-serif;
+      color: white;
+    }
+
+    h1 {
+      text-align: center;
+      color: #0af;
+      margin: 0.5em;
+    }
+
+    iframe {
+      width: 100%;
+      height: 90vh;
+      border: none;
+    }
+
+    .section {
+      margin: 1em 0;
+    }
+
+    .caption {
+      text-align: center;
+      font-size: 1.1em;
+      margin-bottom: 0.5em;
+      color: #ccc;
+    }
+
+    .nav {
+      text-align: center;
+      margin-bottom: 1em;
+    }
+
+    .nav button {
+      background: #0af;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin: 0 5px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .nav button.active {
+      background: #07a;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Interactive Weather Briefing – KMNZ</h1>
+<div class="nav">
+  <button onclick="show(0)" class="active">Radar</button>
+  <button onclick="show(1)">Skew-T</button>
+  <button onclick="show(2)">SIGMETs</button>
+  <button onclick="show(3)">Winds Aloft</button>
+  <button onclick="show(4)">Surface Analysis</button>
+</div>
+
+<div class="section caption">Select a tab above to view current interactive NOAA data</div>
+
+<div class="section">
+  <iframe id="frame0" src="https://radar.weather.gov/station/KFWS/standard" style="display:block;"></iframe>
+  <iframe id="frame1" src="https://www.spc.noaa.gov/exper/soundings/" style="display:none;"></iframe>
+  <iframe id="frame2" src="https://www.aviationweather.gov/iffdp" style="display:none;"></iframe>
+  <iframe id="frame3" src="https://www.aviationweather.gov/windtemp" style="display:none;"></iframe>
+  <iframe id="frame4" src="https://www.wpc.ncep.noaa.gov/html/sfc-zoom.php" style="display:none;"></iframe>
+</div>
+
+<script>
+function show(index) {
+  for (let i = 0; i <= 4; i++) {
+    document.getElementById(`frame${i}`).style.display = i === index ? 'block' : 'none';
+    document.querySelectorAll('.nav button')[i].classList.toggle('active', i === index);
+  }
+}
+</script>
+
+</body>
+</html>
+

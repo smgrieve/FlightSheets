@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Work Types</title>
+</head>
+<body>
+    <h1>Add New  Work Types</h1>
+
+    <!-- Form to add a new work type -->
+    <form method="POST" action="{{ url_for('manage_work_types') }}">
+        <label for="new_description">New Work Type Description:</label>
+        <input type="text" id="new_description" name="new_description" required>
+        <label for="new_value">Value:</label>
+        <input type="number" id="new_value" name="new_value" step="0.01" required>
+	<br><br>
+        <button type="submit" name="add">Add New Work Type</button>
+	<br><br>
+    </form>
+     <h1>Update Work Types</h1>
+    <!-- Form to update or delete existing work types -->
+    <form method="POST" action="{{ url_for('manage_work_types') }}">
+        <label for="description">Select Work Type:</label>
+        <select id="description" name="description" onchange="updateValueField()">
+            <option value="">Please select a work type</option>
+            {% for work_type in work_types %}
+            <option data-value="{{ work_type[1] }}">
+                {{ work_type[0] }}
+            </option>
+            {% endfor %}
+        </select>
+        
+        <label for="value">Value:</label>
+        <input type="number" id="value" name="value" step="0.01" required>
+        <br><br> 
+        <button type="submit" name="update">Update</button>
+        <button type="submit" name="delete">Delete</button>
+    </form>
+
+    <script>
+    function updateValueField() {
+        var selectedOption = document.querySelector('#description option:checked');
+        document.getElementById('value').value = selectedOption.getAttribute('data-value');
+    }
+    </script>
+    <a href="/" class="back-button">Back to Home</a>
+</body>
+</html>
+

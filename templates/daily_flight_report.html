@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Flight Report</title>
+</head>
+<body>
+    <h1>Daily Flight Report</h1>
+    <p>From: {{ yesterday.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    <p>To: {{ now.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+
+    {% if report %}
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Pilot</th>
+                <th>Total Flights</th>
+                <th>Total Rental Cost ($)</th>
+                <th>Total Tow Cost ($)</th>
+                <th>Grand Total Cost ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in report %}
+            <tr>
+                <td>{{ row.pilot }}</td>
+                <td>{{ row.total_flights }}</td>
+                <td>{{ row.total_rental_cost }}</td>
+                <td>{{ row.total_tow_cost }}</td>
+                <td>{{ row.grand_total_cost }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No flights recorded in the last 24 hours.</p>
+    {% endif %}
+</body>
+</html>
+

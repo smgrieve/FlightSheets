@@ -1,0 +1,22 @@
+<h2>Pending Member Registrations</h2>
+<table>
+    <tr><th>Name</th><th>Email</th><th>Phone</th><th>Youth?</th><th>Submitted</th><th>Action</th></tr>
+    {% for p in pending %}
+    <tr>
+        <td>{{ p.FirstName }} {{ p.LastName }}</td>
+        <td>{{ p.MainEmail }}</td>
+        <td>{{ p.MainPhone }}</td>
+        <td>{{ 'Yes' if p.youth_member else 'No' }}</td>
+        <td>{{ p.submitted_at }}</td>
+        <td>
+            <form action="{{ url_for('approve_registration', pending_id=p.id) }}" method="post" style="display:inline;">
+                <button type="submit">Approve</button>
+            </form>
+            <form action="{{ url_for('reject_registration', pending_id=p.id) }}" method="post" style="display:inline;">
+                <button type="submit">Reject</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+

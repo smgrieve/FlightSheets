@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Volunteer Time</title>
+</head>
+<body>
+    <h1>Add Volunteer Time</h1>
+    <form method="POST" action="{{ url_for('add_time') }}">
+        <label for="volunteer_id">Volunteer Name:</label>
+        <select id="volunteer_id" name="volunteer_id" required>
+            <option value="">Select a Volunteer</option>
+            {% for volunteer in volunteers %}
+                <option value="{{ volunteer[0] }}">{{ volunteer[1] }}</option>
+            {% endfor %}
+        </select>
+        <br><br>
+	<label for="date_worked">Date Worked:</label>
+	<input type="date" id="date_worked" name="date_worked" required><br><br>
+        
+        <label for="hours">Hours Worked:</label>
+        <input type="number" id="hours" name="hours" step="0.1" required>
+        <br><br>
+        <label for="work_type_id">Type of Work:</label>
+        <select id="work_type_id" name="work_type_id" required>
+            <option value="">Select Work Type</option>
+            {% for work_type in work_types %}
+                <option value="{{ work_type[0] }}">{{ work_type[1] }}</option>
+            {% endfor %}
+        </select>
+	<br><br>
+        <label for="comments">Comments:</label>
+        <textarea id="comments" name="comments" rows="4"></textarea>
+	<br><br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
+

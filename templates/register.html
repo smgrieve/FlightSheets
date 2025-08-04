@@ -1,46 +1,20 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Register</title>
-</head>
-<body>
-    <h1>Register</h1>
-    <form method="post">
-        {{ form.hidden_tag() }}
-        <div>
-            {{ form.username.label }}
-            {{ form.username(size=32) }}
-            {% if form.username.errors %}
-                {% for error in form.username.errors %}
-                    <div style="color: red;">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        </div>
-	<br>
-        <div>
-            {{ form.password.label }}
-            {{ form.password(size=32) }}
-            {% if form.password.errors %}
-                {% for error in form.password.errors %}
-                    <div style="color: red;">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        </div>
-	<br>
-        <div>
-            {{ form.confirm.label }}
-            {{ form.confirm(size=32) }}
-            {% if form.confirm.errors %}
-                {% for error in form.confirm.errors %}
-                    <div style="color: red;">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
-        </div>
-	<br>
-        <div>
-            {{ form.submit() }}
-        </div>
-    </form>
-</body>
-</html>
+<h2>Member Registration</h2>
+<form method="post">
+    First Name: <input type="text" name="first_name" required><br>
+    Last Name: <input type="text" name="last_name" required><br>
+    Phone: <input type="text" name="phone"><br>
+    Email (Login): <input type="email" name="email" required><br>
+    Password: <input type="password" name="password" required><br>
+    Are you over 18? 
+    <select name="is_adult">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+    </select><br>
+    Are you a youth member? 
+    <select name="youth_member">
+        <option value="1">Yes</option>
+        <option value="0" selected>No</option>
+    </select><br>
+    <button type="submit">Register</button>
+</form>
 

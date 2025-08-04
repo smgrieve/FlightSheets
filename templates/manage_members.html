@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Members</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+            text-align: left;
+            width: 90%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        input, select, button {
+            width: calc(100% - 22px);
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-weight: bold;
+            padding: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            table-layout: auto;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+            white-space: nowrap;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        td input, td select {
+            width: 90%;
+            padding: 5px;
+            font-size: 12px;
+        }
+        .btn-container {
+            margin: 20px 0;
+        }
+        .back-button {
+            padding: 10px 15px;
+            font-size: 14px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 4px;
+        }
+        .back-button:hover {
+            background-color: #218838;
+        }
+        .delete-btn {
+            background-color: red;
+        }
+        .delete-btn:hover {
+            background-color: darkred;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Manage Members</h1>
+
+    <!-- Add New Member -->
+    <h2>Add Member</h2>
+    <form method="post" id="add-member-form">
+        <input type="hidden" name="action" value="Add">
+        <label for="active_status">Active Status:</label>
+        <select name="active_status">
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+
+        <label for="customer">Customer:</label>
+        <input type="text" name="customer" required>
+
+        <label for="first_name">First Name:</label>
+        <input type="text" name="first_name" required>
+
+        <label for="last_name">Last Name:</label>
+        <input type="text" name="last_name" required>
+
+        <label for="main_phone">Main Phone:</label>
+        <input type="text" name="main_phone">
+
+        <label for="main_email">Main Email:</label>
+        <input type="email" name="main_email">
+
+        <label for="bill_to_1">Bill to 1:</label>
+        <input type="text" name="bill_to_1">
+
+        <label for="bill_to_2">Bill to 2:</label>
+        <input type="text" name="bill_to_2">
+
+        <label for="bill_to_3">Bill to 3:</label>
+        <input type="text" name="bill_to_3">
+
+        <label>
+            <input type="checkbox" name="youth_member"> Youth Member
+        </label>
+
+        <button type="submit">Add Member</button>
+    </form>
+
+    <div class="btn-container">
+        <button onclick="refreshPage()">Refresh Members List</button>
+    </div>
+
+    <hr>
+
+    <!-- Display Existing Members -->
+    <h2>Existing Members</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Active</th>
+                <th>Customer</th>
+                <th>First</th>
+                <th>Last</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Bill 1</th>
+                <th>Bill 2</th>
+                <th>Bill 3</th>
+                <th>Youth</th>
+                <th>Member ID</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <form method="post">
+                    <td>
+                        <select name="active_status">
+                            <option value="Active" {% if member[0] == 'Active' %}selected{% endif %}>Active</option>
+                            <option value="Inactive" {% if member[0] == 'Inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </td>
+                    <td><input type="text" name="customer" value="{{ member[1] }}"></td>
+                    <td><input type="text" name="first_name" value="{{ member[2] }}"></td>
+                    <td><input type="text" name="last_name" value="{{ member[3] }}"></td>
+                    <td><input type="text" name="main_phone" value="{{ member[4] }}"></td>
+                    <td><input type="email" name="main_email" value="{{ member[5] }}"></td>
+                    <td><input type="text" name="bill_to_1" value="{{ member[6] }}"></td>
+                    <td><input type="text" name="bill_to_2" value="{{ member[7] }}"></td>
+                    <td><input type="text" name="bill_to_3" value="{{ member[8] }}"></td>
+                    <td>
+                        <input type="checkbox" name="youth_member" {% if member[9] %}checked{% endif %}>
+                    </td>
+                    <td><input type="text" name="member_id" value="{{ member[10] }}" readonly></td>
+                    <td>
+                        <button type="submit" name="action" value="Edit">Save</button>
+                        <button type="submit" name="action" value="Delete" class="delete-btn">Delete</button>
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="btn-container">
+        <a href="/" class="back-button">Back to Home</a>
+    </div>
+
+    <script>
+        function refreshPage() {
+            window.location.reload();
+        }
+
+        document.getElementById('add-member-form').addEventListener('submit', function () {
+            setTimeout(refreshPage, 500);
+        });
+    </script>
+
+</body>
+</html>
+

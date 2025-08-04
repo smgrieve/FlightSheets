@@ -1,52 +1,131 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Add Flight - HSC</title>
-</head>
-<body>
-    <h1>Add a New Flight</h1>
-    <form method="POST">
-        <label for="aircraft">Aircraft:</label><br>
-        <select id="aircraft" name="aircraft">
-            {% for aircraft in aircraft_list %}
-                <option value="{{ aircraft[0] }}">{{ aircraft[0] }}</option>
-            {% endfor %}
-        </select><br><br>
+<style>
+  form {
+    max-width: 600px;
+    margin: auto;
+    padding: 1em;
+    font-family: sans-serif;
+  }
 
-        <label for="towplane">Towplane:</label><br>
-        <select id="towplane" name="towplane">
-            {% for towplane in towplane_list %}
-                <option value="{{ towplane[0] }}">{{ towplane[0] }}</option>
-            {% endfor %}
-        </select><br><br>
+  label {
+    display: block;
+    margin-top: 1em;
+    font-weight: bold;
+  }
 
-        <label for="instructor">Instructor:</label><br>
-        <select id="instructor" name="instructor">
-            {% for instructor in instructor_list %}
-                <option value="{{ instructor[0] }}">{{ instructor[0] }}</option>
-            {% endfor %}
-        </select><br><br>
+  input, select, textarea, button {
+    width: 100%;
+    padding: 0.6em;
+    margin-top: 0.2em;
+    box-sizing: border-box;
+    font-size: 1em;
+  }
 
-        <label for="pilot">Pilot:</label><br>
-        <input type="text" id="pilot" name="pilot"><br><br>
+  button {
+    margin-top: 1.5em;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
 
-        <label for="charge_to">Charge To:</label><br>
-        <input type="text" id="charge_to" name="charge_to"><br><br>
+  button:hover {
+    background-color: #0056b3;
+  }
+</style>
 
-        <label for="takeoff_time">Takeoff Time:</label><br>
-        <input type="text" id="takeoff_time" name="takeoff_time" value="{{ current_time }}" readonly><br><br>
+<form method="post" id="add-flight-form">
+  <!-- Aircraft -->
+  <label for="aircraft">Aircraft:</label>
+  <select name="aircraft" id="aircraft" required>
+    {% for aircraft in aircraft_list %}
+      <option value="{{ aircraft['name'] }}"
+        {% if aircraft['grounded'] %}disabled style="color:red;"{% endif %}
+        {% if aircraft['name'] == aircraft_selected %}selected{% endif %}>
+        {{ aircraft['name'] }}{% if aircraft['grounded'] %} (Grounded){% endif %}
+      </option>
+    {% endfor %}
+  </select>
 
-        <label for="landing_time">Landing Time:</label><br>
-        <input type="text" id="landing_time" name="landing_time" value="{{ current_time }}" readonly><br><br>
+  <!-- Towplane -->
+  <label for="towplane">Towplane:</label>
+  <select name="towplane" id="towplane" required>
+    {% for towplane in towplane_list %}
+      <option value="{{ towplane['name'] }}"
+        {% if towplane['grounded'] %}disabled style="color:red;"{% endif %}
+        {% if towplane['name'] == towplane_selected %}selected{% endif %}>
+        {{ towplane['name'] }}{% if towplane['grounded'] %} (Grounded){% endif %}
+      </option>
+    {% endfor %}
+  </select>
 
-        <label for="release_altitude">Release Altitude (ft):</label><br>
-	<input type="number" id="release_altitude" name="release_altitude" value="0"required> <br><br>
-	
-	<label for="comments">Comments:</label><br>
-	<textarea id="comments" name="comments" rows="4" cols="50"></textarea>
-        <br>
-        <input type="submit" value="Add Flight">
-    </form>
-</body>
-</html>
+  <!-- Instructor -->
+  <label for="instructor">Instructor:</label>
+  <select name="instructor" id="instructor" required>
+    {% for instructor in instructor_list %}
+      <option value="{{ instructor['name'] }}" {% if instructor['name'] == instructor_selected %}selected{% endif %}>{{ instructor['name'] }}</option>
+    {% endfor %}
+  </select>
+
+  <!-- Tow Pilot -->
+  <label for="tow_pilot">Tow Pilot:</label>
+  <select name="tow_pilot" id="tow_pilot" required>
+    {% for tow_pilot in tow_pilots %}
+      <option value="{{ tow_pilot['name'] }}" {% if tow_pilot['name'] == tow_pilot_selected %}selected{% endif %}>{{ tow_pilot['name'] }}</option>
+    {% endfor %}
+  </select>
+
+  <!-- Pilot -->
+  <label for="pilot">Pilot:</label>
+  <input type="text" name="pilot" id="pilot" value="{{ pilot_selected or '' }}" required>
+
+  <!-- Bill To -->
+  <label for="bill_to">Bill To:</label>
+  <select name="bill_to" id="bill_to" required>
+    <option value="" disabled {% if not bill_to_selected %}selected{% endif %}>-- Select Member --</option>
+    {% for member in members %}
+      <option value="{{ member['member_id'] }}" {% if bill_to_selected|string == member['member_id']|string %}selected{% endif %}>
+        {{ member['member_id'] }} - {{ member['member_name'] }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- Takeoff Date and Time -->
+  <label for="takeoff_date">Takeoff Date:</label>
+  <input type="date" name="takeoff_date" value="{{ takeoff_date or current_date }}" required>
+
+  <label for="takeoff_time">Takeoff Time:</label>
+  <input type="time" name="takeoff_time" value="{{ takeoff_time or current_time }}" required>
+
+  <!-- Landing Date and Time -->
+  <label for="landing_date">Landing Date:</label>
+  <input type="date" name="landing_date" value="{{ landing_date or current_date }}" required>
+
+  <label for="landing_time">Landing Time:</label>
+  <input type="time" name="landing_time" value="{{ landing_time or current_time }}" required>
+
+  <!-- Release Altitude -->
+  <label for="release_altitude">Release Altitude (ft):</label>
+  <input type="number" name="release_altitude" value="{{ release_altitude or 0 }}" required>
+
+  <!-- Comments -->
+  <label for="comments">Comments:</label>
+  <textarea name="comments" id="comments">{{ comments_prefilled or '' }}</textarea>
+
+  <!-- Submit -->
+  <button type="submit">Add Flight</button>
+</form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  ['aircraft', 'towplane'].forEach(function(selectId) {
+    var select = document.getElementById(selectId);
+    if (!select) return;
+    for (var i = 0; i < select.options.length; i++) {
+      if (select.options[i].disabled) {
+        select.options[i].style.color = 'red';
+      }
+    }
+  });
+});
+</script>
 

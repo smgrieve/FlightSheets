@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Report</title>
+</head>
+<body>
+    <h1>Flight Report</h1>
+    
+    <form method="post">
+        <label for="start_date">Start Date:</label>
+        <input type="date" name="start_date" value="{{ start_date }}" required>
+        
+        <label for="end_date">End Date:</label>
+        <input type="date" name="end_date" value="{{ end_date }}" required>
+        
+        <button type="submit">Generate Report</button>
+    </form>
+
+    {% if flights %}
+    <form method="post" action="{{ url_for('export_flight_report') }}">
+        <input type="hidden" name="start_date" value="{{ start_date }}">
+        <input type="hidden" name="end_date" value="{{ end_date }}">
+        <button type="submit">Export to CSV</button>
+    </form>
+
+    <hr>
+
+    <h2>Flight Details</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Flight ID</th>
+                <th>Aircraft</th>
+                <th>Instructor</th>
+                <th>Pilot</th>
+                <th>Charge To</th>
+                <th>Takeoff Time</th>
+                <th>Landing Time</th>
+                <th>Flight Time</th>
+                <th>Release Altitude</th>
+                <th>Rental Cost</th>
+                <th>Tow Cost</th>
+                <th>Total Cost</th>
+                <th>Member ID</th>
+                <th>Member Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for flight in flights %}
+            <tr>
+                <td>{{ flight[0] }}</td>
+                <td>{{ flight[1] }}</td>
+                <td>{{ flight[2] }}</td>
+                <td>{{ flight[3] }}</td>
+                <td>{{ flight[4] }}</td>
+                <td>{{ flight[5] }}</td>
+                <td>{{ flight[6] }}</td>
+                <td>{{ flight[7] }}</td>
+                <td>{{ flight[8] }}</td>
+                <td>${{ "%.2f"|format(flight[9]) }}</td>
+                <td>${{ "%.2f"|format(flight[10]) }}</td>
+                <td>${{ "%.2f"|format(flight[11]) }}</td>
+                <td>{{ flight[12] }}</td>
+                <td>{{ flight[13] }} {{ flight[14] }}</td>
+                <td>{{ flight[15] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No flights found for the selected date range.</p>
+    {% endif %}
+</body>
+</html>
+

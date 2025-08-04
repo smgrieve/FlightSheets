@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Live OGN Slideshow</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      overflow: hidden;
+      height: 100%;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      z-index: 0;
+    }
+
+    .slide.active {
+      opacity: 1;
+      z-index: 1;
+    }
+
+    iframe, .status-panel, .photo {
+      width: 100%;
+      height: 100%;
+      border: none;
+      object-fit: cover;
+    }
+
+    .status-panel {
+      background: #111;
+      color: white;
+      padding: 2em;
+      overflow-y: auto;
+      box-sizing: border-box;
+      height: 100%;
+    }
+
+    .status-panel h2 {
+      font-size: 1.5em;
+      margin-top: 0;
+      color: #0af;
+    }
+
+    .glider {
+      margin-bottom: 1em;
+      padding: 1em;
+      background: #222;
+      border-left: 6px solid gray;
+    }
+
+    .glider.airborne { border-color: lime; }
+    .glider.landed   { border-color: orange; }
+    .glider.idle     { border-color: #555; }
+
+    .glider strong {
+      font-size: 1.2em;
+    }
+
+    #clock {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      color: white;
+      font-size: 2em;
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 5px 10px;
+      border-radius: 6px;
+      z-index: 999;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1em;
+      font-size: 1.2em;
+    }
+
+    th, td {
+      border: 1px solid #444;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #222;
+      color: #0af;
+    }
+  </style>
+</head>
+<body>
+
+<div id="clock">--:--</div>
+
+<!-- Slide 1: Live Map -->
+<div class="slide active">
+  <iframe src="/ogn/map"></iframe>
+</div>
+
+<!-- Slide 3: Aircraft Maintenance (Table Version) -->
+<div class="slide">
+  <div class="status-panel" id="maintenancePanel">
+    <h2>Aircraft Maintenance</h2>
+    <table id="maintenanceTable">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Name</th>
+          <th>Annual Due</th>
+          <th>Status</th>
+          <th>Oil Alert</th>
+        </tr>
+      </thead>
+      <tbody id="maintenanceStatus">
+        <tr><td colspan="5">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Slide 4+: Photos -->
+{% for photo in photos %}
+  <div class="slide">
+    <img class="photo" src="{{ url_for('static', filename='photos/' ~ photo) }}" alt="Photo" />
+  </div>
+{% endfor %}
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let currentSlide = 0;
+
+function showSlide(i) {
+  slides.forEach((s, idx) => {
+    s.classList.toggle('active', idx === i);
+  });
+}
+
+function nextSlide() {
+  currentSlide = (currentSlide + 1) % slides.length;
+  showSlide(currentSlide);
+
+  const slide = slides[currentSlide];
+  if (slide.querySelector('#statusPanel')) {
+    fetchStatus();
+  } else if (slide.querySelector('#maintenancePanel')) {
+    fetchAircraftStatus();
+  } else if (slide.querySelector('iframe')) {
+    const iframe = slide.querySelector('iframe');
+    iframe.src = iframe.src;
+  }
+}
+
+setInterval(nextSlide, 15000);  // 15 seconds per slide
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  document.getElementById("clock").textContent = `${hh}:${mm}`;
+}
+setInterval(updateClock, 10000);
+updateClock();
+
+// Glider Status
+async function fetchStatus() {
+  try {
+    const res = await fetch("/ogn/status.json");
+    const data = await res.json();
+    const container = document.getElementById("gliderStatus");
+    container.innerHTML = "";
+
+    if (data.length === 0) {
+      container.textContent = "No active gliders.";
+      return;
+    }
+
+    for (const g of data) {
+      const div = document.createElement("div");
+      div.className = "glider " + (g.status || "idle");
+      let icon = "⏸";
+      if (g.status === "airborne") icon = "🛫";
+      else if (g.status === "landed") icon = "🪂";
+
+      div.innerHTML = `<strong>${icon} ${g.name || g.flarm_id}</strong><br>
+        Alt: ${Math.round(g.altitude || 0)} ft<br>
+        Speed: ${Math.round(g.speed || 0)} kt<br>
+        Last seen: ${g.time || 'n/a'}`;
+      container.appendChild(div);
+    }
+  } catch (err) {
+    document.getElementById("gliderStatus").textContent = "Error loading status.";
+  }
+}
+
+// Aircraft Maintenance Table
+async function fetchAircraftStatus() {
+  try {
+    const res = await fetch("/ogn/aircraft_status.json");
+    const data = await res.json();
+    const tbody = document.getElementById("maintenanceStatus");
+    tbody.innerHTML = "";
+
+    for (const a of data) {
+      const row = document.createElement("tr");
+
+      if (a.grounded) row.style.opacity = 0.5;
+      if (a.due_soon) row.style.backgroundColor = "#553300";
+      if (a.oil_due) row.style.borderColor = "red";
+
+      const icon = a.aircraft_type === "glider" ? "🛶" : "🛩";
+
+      row.innerHTML = `
+        <td>${icon}</td>
+        <td>${a.name || a.id}</td>
+        <td>${a.annual_due_date || 'n/a'}${a.due_soon ? ' ⚠️' : ''}</td>
+        <td>${a.grounded ? '⛔ Grounded' : '✅ Active'}</td>
+        <td>${a.oil_due ? '🛢 Yes' : ''}</td>
+      `;
+
+      tbody.appendChild(row);
+    }
+  } catch (err) {
+    document.getElementById("maintenanceStatus").innerHTML =
+      `<tr><td colspan="5">Error loading aircraft status.</td></tr>`;
+  }
+}
+
+// Initial trigger
+fetchStatus();
+</script>
+
+</body>
+</html>
+

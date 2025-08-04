@@ -2,35 +2,102 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Aircraft Status</title>
-        <style>
-        .due-this-month {
-		            color: red;
-			            }
-	    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft & Towplane Status</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .grounded {
+            background-color: red;
+            color: white;
+            font-weight: bold;
+        }
+        .good {
+            background-color: lightgreen;
+            font-weight: bold;
+        }
+        .back-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Aircraft Status</h1>
-    <table border="1">
+    <h1>Aircraft & Towplane Status</h1>
+
+    <table>
         <thead>
             <tr>
-                <th>Aircraft</th>
+                <th>Type</th>
+                <th>Name</th>
+                <th>Total Flights</th>
                 <th>Annual Due Date</th>
-                <th>Total Flight Time (hours)</th>
-		<th>Hours Since Last Annual</th>
+                <th>Total Flight Time</th>
+                <th>Hours Since Last Annual</th>
+                <th>Status</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody>
             {% for aircraft in aircrafts %}
-	    <tr class="{{ 'due-this-month' if aircraft[5] else '' }}">
+            {% set is_red = aircraft[6] or aircraft[8] or (aircraft[7] == 'towplane' and aircraft[9]) %}
+            <tr class="{% if is_red %}grounded{% else %}good{% endif %}">
+                <td>{{ "Glider" if aircraft[7] == 'glider' else "Towplane" }}</td>
                 <td>{{ aircraft[1] }}</td>
-                <td>{{ aircraft[2] }}</td>
+                <td>{{ aircraft[2] if aircraft[7] == 'glider' else "N/A" }}</td>
                 <td>{{ aircraft[3] }}</td>
-                <td>{{ aircraft[4] }}</td>
+                <td>{{ aircraft[4] if aircraft[7] == 'glider' else "N/A" }}</td>
+                <td>{{ aircraft[5] if aircraft[7] == 'glider' else "N/A" }}</td>
+                <td>
+                    {% if aircraft[6] %}
+                        <span class="grounded">Grounded</span>
+                    {% elif aircraft[8] %}
+                        <span class="grounded">Annual Due</span>
+                    {% elif aircraft[7] == 'towplane' and aircraft[9] %}
+                        <span class="grounded">Oil Change Due</span>
+                    {% else %}
+                        <span class="good">Good</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form method="POST">
+                        <input type="hidden" name="aircraft_id" value="{{ aircraft[0] }}">
+                        <input type="hidden" name="aircraft_type" value="{{ aircraft[7] }}">
+                        {% if aircraft[6] %}
+                            <button type="submit" name="action" value="Un-Ground">Restore</button>
+                        {% else %}
+                            <button type="submit" name="action" value="Ground">Ground</button>
+                        {% endif %}
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+
+    <a href="/" class="back-button">Back to Home</a>
+
 </body>
 </html>
 

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Flight Report</title>
+</head>
+<body>
+    <h1>Detailed Flight Report</h1>
+    <p>From: {{ yesterday.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    <p>To: {{ now.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+
+    {% if report %}
+        {% for pilot, data in report.items() %}
+        <h2>Pilot: {{ pilot }}</h2>
+
+        <h3>Summary:</h3>
+        <ul>
+            <li>Total Flights: {{ data.summary.total_flights }}</li>
+            <li>Total Rental Cost: ${{ data.summary.total_rental_cost }}</li>
+            <li>Total Tow Cost: ${{ data.summary.total_tow_cost }}</li>
+            <li>Grand Total Cost: ${{ data.summary.grand_total_cost }}</li>
+        </ul>
+
+        <h3>Flight Details:</h3>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Aircraft</th>
+                    <th>Takeoff Time</th>
+                    <th>Landing Time</th>
+                    <th>Rental Cost ($)</th>
+                    <th>Tow Cost ($)</th>
+                    <th>Total Cost ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in data.flights %}
+                <tr>
+                    <td>{{ flight.aircraft }}</td>
+                    <td>{{ flight.takeoff_time }}</td>
+                    <td>{{ flight.landing_time }}</td>
+                    <td>{{ flight.cost }}</td>
+                    <td>{{ flight.tow_cost }}</td>
+                    <td>{{ flight.total_cost }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endfor %}
+    {% else %}
+        <p>No flights recorded in the last 24 hours.</p>
+    {% endif %}
+</body>
+</html>
+

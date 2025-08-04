@@ -29,6 +29,7 @@
             <th>Instructor</th>
             <th>Pilot</th>
             <th>Charge To</th>
+            <th>Tow Pilot</th>
             <th>Takeoff Time</th>
             <th>Landing Time</th>
             <th>Flight Time</th>
@@ -48,6 +49,7 @@
             <td>{{ flight[2] }}</td>
             <td>{{ flight[3] }}</td>
             <td>{{ flight[4] }}</td>
+            <td>{{ flight[14] }}</td>
             <td>{{ flight[5] }}</td>
             <td>{{ flight[6] }}</td>
             <td>{{ flight[7] }}</td>
@@ -62,6 +64,9 @@
             <td>
                 <a href="{{ url_for('update_landing_time', flight_id=flight[0]) }}">Update Landing</a>
             </td>
+            <td>
+		<a href="{{ url_for('copy_flight', flight_id=flight[0]) }}">Copy</a>
+            </td>
         </tr>
         {% endfor %}
     </table>
@@ -70,9 +75,19 @@
     <br><br>
     <a href="{{ url_for('add_tow_plane_usage') }}">Add a Towplane Usage</a>
     <br><br>
-    <a href="{{ url_for('view_tow_plane_usage') }}">Towplane Usage</a>
+    <a href="{{ url_for('volunteer_dashboard') }}">Volunteer_Dashboard</a>
     <br><br>
-    <a href="{{ url_for('export_to_csv') }}">Export to CSV</a>
+    <a href="{{ url_for('admin_dashboard') }}">Administrator_Dashboard</a>
+    <br><br>
+    <a href="{{ url_for('profile') }}">Personal Profile</a>
+    <br><br>
+    <a href="{{ url_for('ogn_flights') }}">OGN Flights</a>
+    <br><br>
+    <a href="{{ url_for('ogn_map') }}">OGN Map</a>
+    <br><br>
+    <a href="{{ url_for('track_page') }}">OGN Historical Tracks</a>
+    <br><br>
+    <a href="{{ url_for('reset_password') }}">Reset Password</a>
     <br><br>
     <a href="{{ url_for('logout') }}">Logout</a>
     <br><br>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>OGN Flight {{ flight_id }}</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; }
+    #map { height: 60vh; }
+    canvas { max-width: 100%; }
+    .chart-container { padding: 1em; }
+    .legend {
+      position: absolute;
+      bottom: 70px;
+      left: 20px;
+      background: white;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 14px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.2);
+      line-height: 1.4;
+    }
+    .legend span {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .controls {
+      margin: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .back-button {
+      display: block;
+      text-align: center;
+      padding: 12px;
+      background: #007bff;
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+      border-top: 1px solid #ccc;
+    }
+  </style>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div id="map"></div>
+<div class="chart-container">
+  <canvas id="vsChart"></canvas>
+  <div class="controls">
+    <input type="range" id="slider" min="0" max="{{ track|length - 1 }}" value="0" />
+    <button id="playPause">▶️</button>
+  </div>
+</div>
+
+<div class="legend" id="legend">
+  <strong>Thermal Strength</strong><br>
+  <span style="background:#ff0000"></span> ≥ 6 ft/s<br>
+  <span style="background:#ff6600"></span> 4 – 5.9 ft/s<br>
+  <span style="background:#ffaa00"></span> 2.5 – 3.9 ft/s<br>
+  <span style="background:#ffcc00"></span> 1.5 – 2.4 ft/s<br>
+  <span style="background:#ffff66"></span> < 1.5 ft/s
+</div>
+
+<!-- Back button at bottom -->
+<a class="back-button" href="{{ url_for('ogn_flights') }}">&larr; Back to Flights</a>
+
+<script>
+const track = {{ track|tojson }};
+const bestThermal = {{ best_thermal|tojson }};
+const vspd = {{ vspd|tojson }};
+const times = {{ times|tojson }};
+
+const map = L.map('map').setView([track[0].latitude, track[0].longitude], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// Plot glider track
+const latlngs = [];
+track.forEach(pt => {
+  latlngs.push([pt.latitude, pt.longitude]);
+  const vs = pt.vertical_speed || 0;
+  const color =
+    vs >= 6 ? "#ff0000" :
+    vs >= 4 ? "#ff6600" :
+    vs >= 2.5 ? "#ffaa00" :
+    vs >= 1.5 ? "#ffcc00" :
+               "#ffff66";
+  L.circleMarker([pt.latitude, pt.longitude], {
+    radius: 3,
+    color: color,
+    weight: 1,
+    fillOpacity: 0.9
+  }).addTo(map);
+});
+
+L.polyline(latlngs, { color: "blue", weight: 1 }).addTo(map);
+
+// Strongest thermal path
+if (bestThermal.length > 0) {
+  const thermalPath = bestThermal.map(p => [p.latitude, p.longitude]);
+  L.polyline(thermalPath, {
+    color: "magenta",
+    weight: 3,
+    dashArray: "6, 6"
+  }).addTo(map);
+  map.fitBounds(L.polyline(thermalPath).getBounds());
+} else {
+  map.fitBounds(L.polyline(latlngs).getBounds());
+}
+
+// Chart.js vertical speed graph
+const ctx = document.getElementById('vsChart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: times,
+    datasets: [{
+      label: 'Vertical Speed (ft/s)',
+      data: vspd,
+      borderColor: 'blue',
+      fill: false,
+      pointRadius: 0,
+      tension: 0.1
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: {
+      x: { display: true, title: { display: true, text: 'Time' } },
+      y: { display: true, title: { display: true, text: 'ft/s' } }
+    }
+  }
+});
+
+// Playback controls
+const slider = document.getElementById("slider");
+const playPause = document.getElementById("playPause");
+let marker = null;
+let playing = false;
+let interval = null;
+
+function updateMarker(i) {
+  const pt = track[i];
+  if (!pt) return;
+  if (!marker) {
+    marker = L.circleMarker([pt.latitude, pt.longitude], {
+      radius: 6, color: "black", weight: 2, fillColor: "white", fillOpacity: 1
+    }).addTo(map);
+  } else {
+    marker.setLatLng([pt.latitude, pt.longitude]);
+  }
+}
+
+slider.addEventListener("input", () => {
+  updateMarker(parseInt(slider.value));
+});
+
+playPause.addEventListener("click", () => {
+  playing = !playing;
+  playPause.textContent = playing ? "⏸" : "▶️";
+  if (playing) {
+    interval = setInterval(() => {
+      let i = parseInt(slider.value);
+      if (i >= track.length - 1) {
+        clearInterval(interval);
+        playPause.textContent = "▶️";
+        playing = false;
+        return;
+      }
+      slider.value = i + 1;
+      updateMarker(i + 1);
+    }, 200);
+  } else {
+    clearInterval(interval);
+  }
+});
+
+// Initialize position
+updateMarker(0);
+</script>
+
+</body>
+</html>
+

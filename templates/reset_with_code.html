@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Reset Password with Code</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; background: #f0f2f5; }
+    .container { max-width: 500px; margin: auto; background: white; padding: 2em; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h2 { text-align: center; }
+    label { display: block; margin: 1em 0 0.5em; }
+    input[type="email"],
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.75em;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      margin-top: 1.5em;
+      width: 100%;
+      padding: 0.75em;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .flash {
+      margin-bottom: 1em;
+      padding: 1em;
+      background: #fff3cd;
+      color: #856404;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Reset Your Password</h2>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    <form method="POST">
+      <label for="email">Email (Username)</label>
+      <input type="email" name="email" id="email" required>
+
+      <label for="reset_code">Reset Code</label>
+      <input type="text" name="reset_code" id="reset_code" required>
+
+      <label for="new_password">New Password</label>
+      <input type="password" name="new_password" id="new_password" required>
+
+      <label for="confirm_password">Confirm New Password</label>
+      <input type="password" name="confirm_password" id="confirm_password" required>
+
+      <button type="submit">Reset Password</button>
+    </form>
+  </div>
+</body>
+</html>
+

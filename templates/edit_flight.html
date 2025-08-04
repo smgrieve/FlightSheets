@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Flight</title>
+</head>
+<body>
+    <h1>Edit Flight</h1>
+    <form method="post">
+        <label for="aircraft">Aircraft:</label>
+        <select name="aircraft" required>
+            {% for aircraft in aircraft_list %}
+            <option value="{{ aircraft[0] }}" {% if flight[1] == aircraft[0] %}selected{% endif %}>{{ aircraft[0] }}</option>
+            {% endfor %}
+	</select><br>
+
+        <label for="towplane">Towplane:</label>
+        <select name="towplane" required>
+            {% for towplane in towplane_list %}
+            <option value="{{ towplane[0] }}" {% if flight[13] == towplane[0] %}selected{% endif %}>{{ towplane[0] }}</option>
+            {% endfor %}
+	</select><br>
+
+        <label for="tow_pilot">Tow Pilot:</label>
+        <select name="tow_pilot">
+            {% for tow_pilot in tow_pilot_list %}
+            <option value="{{ tow_pilot[0] }}" {% if flight[14] == tow_pilot[0] %}selected{% endif %}>{{ tow_pilot[0] }}</option>
+            {% endfor %}
+	</select><br>
+
+        <label for="instructor">Instructor:</label>
+        <select name="instructor">
+            {% for instructor in instructor_list %}
+            <option value="{{ instructor[0] }}" {% if flight[2] == instructor[0] %}selected{% endif %}>{{ instructor[0] }}</option>
+            {% endfor %}
+	</select><br>
+
+        <label for="pilot">Pilot:</label>
+        <input type="text" name="pilot" value="{{ flight[3] }}" required>
+	<br>
+
+        <label for="charge_to">Charge To:</label>
+        <select name="charge_to" required>
+            {% for member in members_list %}
+	    <option value="{{ member[0] }}" {% if flight[4]|string == member[0]|string %}selected{% endif %}>
+		{{ member[1] }} ({{ member[0] }})
+            </option>
+            {% endfor %}
+	</select><br>
+        <label for="takeoff_time">Takeoff Time:</label>
+        <input type="datetime-local" name="takeoff_time" value="{{ flight[5] }}" required>
+	<br>
+        <label for="landing_time">Landing Time:</label>
+        <input type="datetime-local" name="landing_time" value="{{ flight[6] }}" required>
+	<br>
+        <label for="release_altitude">Release Altitude:</label>
+        <input type="number" name="release_altitude" value="{{ flight[8] }}" required>
+	<br>
+        <label for="comments">Comments:</label>
+        <textarea name="comments">{{ flight[10] }}</textarea>
+	<br>
+        <button type="submit">Save Changes</button>
+    </form>
+</body>
+</html>
+

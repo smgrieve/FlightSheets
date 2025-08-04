@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Report</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Billing Report</h1>
+
+    <form method="post">
+        <label for="start_date">Start Date:</label>
+        <input type="date" name="start_date" value="{{ start_date }}" required>
+        <label for="end_date">End Date:</label>
+        <input type="date" name="end_date" value="{{ end_date }}" required>
+        <button type="submit">Generate Report</button>
+    </form>
+
+    <hr>
+
+    {% if flights_data %}
+        <h2>Flight Details</h2>
+        {% set current_member_id = None %}
+        {% for member_id, member_email, pilot, aircraft, takeoff_time, landing_time, flight_time, release_altitude, cost, tow_cost, total_cost in flights_data %}
+            {% if current_member_id != member_id %}
+                {% if current_member_id is not none %}
+                        </tbody>
+                    </table>
+                    <p><strong>Total for Member ID {{ current_member_id }}:</strong> 
+                    ${{ "%.2f" | format(total_data[current_member_id][2]) }}</p>
+                {% endif %}
+                <h3>Member ID: {{ member_id }} ({{ member_email }})</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Pilot</th>
+                            <th>Aircraft</th>
+                            <th>Takeoff Time</th>
+                            <th>Landing Time</th>
+                            <th>Flight Time</th>
+                            <th>Release Altitude</th>
+                            <th>Rental Cost</th>
+                            <th>Tow Cost</th>
+                            <th>Total Cost</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            {% endif %}
+            <tr>
+                <td>{{ pilot }}</td>
+                <td>{{ aircraft }}</td>
+                <td>{{ takeoff_time }}</td>
+                <td>{{ landing_time }}</td>
+                <td>{{ flight_time }}</td>
+                <td>{{ release_altitude }}</td>
+                <td>${{ "%.2f" | format(cost) }}</td>
+                <td>${{ "%.2f" | format(tow_cost) }}</td>
+                <td>${{ "%.2f" | format(total_cost) }}</td>
+            </tr>
+            {% set current_member_id = member_id %}
+        {% endfor %}
+        </tbody>
+        </table>
+        {% if total_data.get(current_member_id) %}
+            <p><strong>Total for Member ID {{ current_member_id }}:</strong> 
+            ${{ "%.2f" | format(total_data[current_member_id][2]) }}</p>
+        {% endif %}
+    {% else %}
+        <p>No flights recorded for the selected date range.</p>
+    {% endif %}
+</body>
+</html>
+

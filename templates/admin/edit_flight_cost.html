@@ -1,0 +1,14 @@
+<h2>Edit Flight Cost (Flight ID: {{ flight.id }})</h2>
+<form method="post">
+    <label for="rental_cost">Rental Cost:</label>
+    <input type="number" step="0.01" name="rental_cost" value="{{ flight.cost }}" required><br>
+
+    <label for="tow_cost">Tow Cost:</label>
+    <input type="number" step="0.01" name="tow_cost" value="{{ flight.tow_cost }}" required><br>
+
+    <p><strong>Total (auto-calculated):</strong> Will be rental + tow</p>
+
+    <button type="submit">Update</button>
+    <a href="{{ url_for('manage_flights') }}">Cancel</a>
+</form>
+
